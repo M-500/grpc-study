@@ -8,7 +8,8 @@ package handler
 
 import (
 	"context"
-	"grpc-study/demo1-hello-grpc/server/pb/hello"
+	"fmt"
+	"grpc-study/demo3-hello-grpc-consul/server/pb/hello"
 )
 
 type HelloService struct {
@@ -17,6 +18,7 @@ type HelloService struct {
 
 func (h *HelloService) SayHello(ctx context.Context, req *proto.HelloReq) (res *proto.HelloResp, err error) {
 	res = new(proto.HelloResp)
+	fmt.Println("发起了调用！")
 	res.Value = "你好呀" + req.Key
 	return res, nil
 }

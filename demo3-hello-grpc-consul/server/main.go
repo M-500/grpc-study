@@ -9,19 +9,19 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/hashicorp/consul/api"
-	uuid "github.com/satori/go.uuid"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/health"
-	"google.golang.org/grpc/health/grpc_health_v1"
-	"google.golang.org/grpc/reflection"
-	"grpc-study/demo1-hello-grpc/server/handler"
-	proto "grpc-study/demo1-hello-grpc/server/pb/hello"
 	"net"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+
+	"github.com/hashicorp/consul/api"
+	uuid "github.com/satori/go.uuid"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
+	"grpc-study/demo3-hello-grpc-consul/server/handler"
+	proto "grpc-study/demo3-hello-grpc-consul/server/pb/hello"
 )
 
 // @Description
@@ -33,19 +33,19 @@ func main() {
 	flag.Parse()
 	fmt.Println("运行端口号为:", *Port)
 	srvID := UUID()
-	consulAddr := "192.168.1.52:8500"
+	serverName := "grpc-consul-test"
+	consulAddr := "192.168.1.52:8500" // 本地consul的地址
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", *IP, *Port))
 	if err != nil {
 		panic("failed to listen:" + err.Error())
 	}
 	server := grpc.NewServer()
 	proto.RegisterHelloServer(server, &handler.HelloService{})
-	reflection.Register(server) // 这一行代码很重要！！！！
 	// 服务健康检查
 	grpc_health_v1.RegisterHealthServer(server, health.NewServer())
 
-	// 注册服务
-	Register(*IP, *Port, "go测试", []string{"test", "fuck"}, srvID, "192.168.1.52:8500")
+	// 注册服务到Consul
+	Register(*IP, *Port, serverName, []string{"test", "fuck"}, srvID, "192.168.1.52:8500")
 
 	go func() {
 		err = server.Serve(lis)
@@ -57,6 +57,7 @@ func main() {
 	quit := make(chan os.Signal)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
+	// 注销Consul的服务
 	if err = DeregisterService(srvID, consulAddr); err != nil {
 		fmt.Println("error：服务注销失败")
 	}
