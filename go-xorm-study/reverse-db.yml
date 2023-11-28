@@ -1,0 +1,10 @@
+---
+kind: reverse
+name: test_xorm
+source:
+  database: mysql
+  conn_str: 'admin:123456@tcp(192.168.1.52:3306)/test_xorm?charset=utf8mb4'
+targets:
+  - type: codes
+    language: golang
+    output_dir: ./models/
